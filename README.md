@@ -4,6 +4,30 @@ A two-layer AI system for autonomous drone delivery routing on a discretized cit
 
 ---
 
+## Quick Start
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Launch the interactive frontend (opens in your browser)
+python3 -m streamlit run app.py
+
+# 3. Train the Q-learning agent (saves qtable.pkl)
+python3 qlearning.py --tier easy --episodes 5000
+
+# 4. Run the benchmark (requires a trained qtable.pkl)
+python3 benchmark.py
+
+# 5. Run unit tests
+pytest test_astar.py -v
+
+# 6. Watch one episode with a Pygame visualisation
+python3 integrate.py --scenario easy --render
+```
+
+---
+
 ## Overview
 
 This project implements a full autonomous delivery drone system that combines two classical AI planning paradigms:
