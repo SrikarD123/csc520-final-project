@@ -1,3 +1,29 @@
+# ── Install dependencies ──────────────────────────────────────────────────────
+#
+#   pip install -r requirements.txt
+#
+# ── Run the interactive frontend (recommended) ────────────────────────────────
+#
+#   python3 -m streamlit run app.py
+#
+# ── Train the Q-learning agent ────────────────────────────────────────────────
+#
+#   python3 qlearning.py --tier easy --episodes 5000
+#
+# ── Run the benchmark (requires a trained qtable.pkl) ────────────────────────
+#
+#   python3 benchmark.py
+#
+# ── Run unit tests ────────────────────────────────────────────────────────────
+#
+#   pytest test_astar.py -v
+#
+# ── Run one episode with Pygame visualisation ────────────────────────────────
+#
+#   python3 integrate.py --scenario easy --render
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
 numpy>=1.24
 pandas>=2.0
 matplotlib>=3.7
