@@ -20,7 +20,7 @@ python3 qlearning.py --tier easy --episodes 5000
 python3 benchmark.py
 
 # 5. Run unit tests
-pytest test_astar.py -v
+python3 -m pytest test_astar.py -v
 
 # 6. Watch one episode with a Pygame visualisation
 python3 integrate.py --scenario easy --render
