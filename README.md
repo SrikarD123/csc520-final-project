@@ -344,6 +344,80 @@ Built by **Srikar**. Design decisions:
 
 ---
 
+## Interactive Frontend (`app.py`)
+
+A Streamlit web app that lets you watch any policy control the drone in real time.
+
+### Setup and Launch
+
+```bash
+pip install streamlit
+python3 -m streamlit run app.py
+```
+
+The app opens automatically in your browser at `http://localhost:8501`.
+
+### Sidebar Controls
+
+| Control | What it does |
+|---------|-------------|
+| **Difficulty tier** | Switches between easy (10×10), medium (20×20), and hard (50×50) grids. Changing tier resets the episode. |
+| **Policy** | Selects which AI drives the drone: Q-Learning (trained agent), Greedy (nearest-neighbour heuristic), or Random. |
+| **Seed** | Determines the procedurally generated map — same seed always produces the same city layout, wind map, delivery locations, and obstacle starting positions. Change it to explore different scenarios. |
+| **Reset episode** | Starts a fresh episode with the current tier/policy/seed combination. |
+| **Auto-play toggle** | When on, the app automatically steps through the episode without you pressing anything. |
+| **Steps / second** | Controls auto-play speed (1–10 steps per second). |
+
+### Grid Visualisation
+
+The coloured grid is the live city map, redrawn after every action:
+
+| Colour | Entity | What to watch |
+|--------|--------|--------------|
+| **Blue ▲** | Drone | Tracks the drone's current position; the triangle points in the direction of the last move. |
+| **Red** | No-fly zone | Hard-blocked cells — A* will always route around these, even if it means a longer path. |
+| **Green** | Charging station | Drone must land here to refill battery to 100%. Watch whether Q-Learning proactively routes to chargers before the battery runs out. |
+| **Yellow** | Pending delivery | A dropoff cell the drone hasn't reached yet. |
+| **Light green** | Completed delivery | Dropoff cell the drone reached within the time window — reward +100 was earned. |
+| **Pink/red** | Failed delivery | Drone skipped this delivery or the time window expired before arrival. |
+| **Orange** | Moving obstacle | Relocates one cell per timestep. If the drone's planned A* path is blocked by an obstacle, the path is automatically replanned from the drone's current position. |
+
+### Stats Panel (right side)
+
+- **Battery gauge** — colour-coded bar: green > 40%, orange 20–40%, red < 20%. Shows how aggressively the policy consumes power. Q-Learning may accept more battery spend per delivery than Greedy if it learned that recharging mid-route is too costly.
+- **Timestep counter** — how far through the episode budget the drone is. Hard tier has 4,000 steps; watch whether any policy runs out of time before finishing all deliveries.
+- **Cumulative reward** — running total of all rewards since episode start. Each timestep costs −1; each on-time delivery earns +100; a battery crash or obstacle collision costs −50.
+- **Deliveries table** — shows every delivery's ID, dropoff cell, time window (earliest–latest step), and current status icon (🟡 pending, ✅ delivered, ❌ failed).
+
+### Step Log
+
+The last 20 actions are logged in a table showing step number, reward earned, battery level, and delivery counts. This makes it easy to spot exactly when a delivery was completed (+100 reward spike) or when the drone crashed (−50 reward).
+
+### What to Look for by Policy
+
+**Q-Learning**
+- On easy tier, watch the drone plan multi-step routes that sequence deliveries efficiently rather than taking the geometrically nearest one each time.
+- At low battery, the Q-learner sometimes skips a distant delivery entirely (SKIP action) to preserve battery for closer ones — a behaviour it learned because running out of battery costs more in the long run.
+- On medium/hard tiers you may see suboptimal decisions; the Q-table was trained on easy maps, so harder grids expose generalisation limits of tabular RL.
+
+**Greedy**
+- The drone always targets the nearest pending delivery dropoff, and recharges when battery drops below 20%. This is a strong, interpretable baseline — compare its route efficiency against Q-Learning.
+- On hard tier (large grid, many deliveries), Greedy's simple nearest-neighbour heuristic achieves 66% delivery success vs Q-Learning's 16%, because it doesn't need a pre-trained Q-table to handle unseen grid sizes.
+
+**Random**
+- Moves are sampled uniformly from the 8 directions + stay. The drone wanders aimlessly, rarely reaching a delivery within its time window. Useful as a lower-bound sanity check — any trained policy should beat it by a large margin.
+
+### Connecting the Frontend to the AI Code
+
+Each ▶ Step click triggers the full two-layer decision cycle:
+
+1. **High-level action** — the selected policy (`qlearning.py`, `baselines.py`) chooses *where* to go (which delivery, which charger, or skip).
+2. **Low-level path** — `astar.find_path()` computes the optimal route from the drone's current cell to that target, respecting no-fly zones, wind costs, and battery budget.
+3. **Execution** — the drone follows the path one cell per `sim.step()` call. After each cell, `astar.replan()` checks if a moving obstacle has entered the remaining route; if so, A* reruns from the current position.
+4. **State update** — battery, drone position, delivery statuses, and timestep are updated by the simulator and reflected immediately in the grid and stats panel.
+
+---
+
 ## Dependencies
 
 ```
@@ -352,12 +426,13 @@ pandas
 matplotlib
 pygame
 pytest
+streamlit
 ```
 
 Install all with:
 
 ```bash
-pip install numpy pandas matplotlib pygame pytest
+pip install numpy pandas matplotlib pygame pytest streamlit
 ```
 
 ---
