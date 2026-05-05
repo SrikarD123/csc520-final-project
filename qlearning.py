@@ -200,6 +200,12 @@ class QLearningAgent:
                 planned_path, _ = result
 
             if len(planned_path) < 2:
+                # Already at target — take one STAY step so the simulator
+                # processes the arrival (recharge / delivery credit) and
+                # advances the timestep. Without this, sim.done never changes
+                # and the outer training loop spins forever.
+                _, r, _, _ = sim.step(STAY)
+                total_reward += r
                 break
 
             next_cell = planned_path[1]

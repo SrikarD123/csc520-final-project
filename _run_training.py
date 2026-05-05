@@ -1,15 +1,17 @@
-"""Run 20 chunks of 50 episodes each, loading and saving qtable.pkl each time."""
-import sys
+"""Single continuous 3000-episode training run — generates training_curve.png."""
+import sys, time, os
 sys.stdout.reconfigure(line_buffering=True)
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+import simulator as sim_mod
 from qlearning import QLearningAgent
-from simulator import TIER_CONFIGS
 
-for i in range(1, 21):
-    plot_path = 'training_curve.png' if i == 20 else '/dev/null'
-    a = QLearningAgent()
-    a.load('qtable.pkl')
-    a.train(TIER_CONFIGS['easy'], 50, 'qtable.pkl', plot_path)
-    print(f"=== Run {i}/20 complete. Q-table states: {len(a.Q)} ===", flush=True)
+N   = 3000
+cfg = sim_mod.TIER_CONFIGS['easy']
 
-print("ALL 20 RUNS COMPLETE", flush=True)
+agent = QLearningAgent()
+t0    = time.time()
+rewards = agent.train(cfg, N, 'qtable.pkl', 'training_curve.png')
+elapsed = time.time() - t0
+print(f'Done: {N} eps in {elapsed:.1f}s  Q-states={len(agent.Q)}  eps={agent.epsilon:.4f}')
+
